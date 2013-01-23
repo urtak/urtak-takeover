@@ -16,7 +16,7 @@
           params.push(k + "=" + encodeURIComponent(v));
         }
       });
-      url = document.location + "?";
+      url = document.location.protocol + "://" + document.location.host + "?";
       url += params.join("&");
       if (last !== url) {
         last = url;

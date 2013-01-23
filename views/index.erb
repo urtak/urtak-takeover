@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Urtak Takeover!</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/css/app.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div id="main" class="container">
+      <form action="/takeover" method="POST">
+        <fieldset>
+          <legend>Urtak takes over</legend>
+          <label>Url</label>
+          <input
+            name="url"
+            class="input-block-level"
+            type="text"
+            placeholder="e.g. http://example.com"
+            value="<%= h params[:url] %>"
+          />
+          <label>Selector</label>
+          <input
+            name="selector"
+            class="input-block-level"
+            type="text"
+            placeholder="e.g. #some-div"
+            value="<%= h params[:selector] %>"
+          />
+          <label>Urtak</label>
+          <input
+            name="urtak"
+            class="input-block-level"
+            type="text"
+            placeholder="e.g. &lt;a href=&quot;https://urtak.com/clr/sj496wjjwmtizr9ydiitkw7tnanx2fft&quot;&gt;Sheryl and Lance&lt;/a&gt;"
+            value="<%= h params[:urtak] %>"
+          />
+          <button type="submit" class="btn">Make it so!</button>
+        </fieldset>
+      </form>
+      <form>
+        <fieldset>
+          <label>Shortcut</label>
+          <input name="shortcut" class="input-block-level" type="text">
+        </fieldset>
+      </form>
+    </div>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

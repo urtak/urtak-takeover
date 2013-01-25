@@ -19,7 +19,7 @@ class App < Sinatra::Base
     erb :index
   end
 
-  post '/takeover' do
+  get '/takeover' do
     response = HTTParty.get params[:url]
     doc      = Nokogiri::HTML response.body
     head     = (doc.css "head").first

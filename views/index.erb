@@ -7,7 +7,7 @@
   </head>
   <body>
     <div id="main" class="container">
-      <form action="/takeover" method="POST">
+      <form action="/takeover" method="GET">
         <fieldset>
           <legend>Urtak takes over</legend>
           <label>Url</label>
@@ -35,12 +35,6 @@
             value="<%= h params[:urtak] %>"
           />
           <button type="submit" class="btn">Make it so!</button>
-        </fieldset>
-      </form>
-      <form>
-        <fieldset>
-          <label>Shortcut</label>
-          <input name="shortcut" class="input-block-level" type="text">
         </fieldset>
       </form>
     </div>

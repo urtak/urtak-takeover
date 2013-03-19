@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Urtak Takeovers</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/css/app.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div id="main" class="container">
+      <ul>
+        <% if !@takeovers.empty? %>
+          <% @takeovers.each do |takeover| %>
+            <li><a href="/<%= takeover.token %>"><%= h takeover.url %></a></li>
+          <% end %>
+        <% end %>
+      </ul>
+    </div>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+  </body>
+</html>

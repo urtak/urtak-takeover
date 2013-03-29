@@ -1,5 +1,5 @@
 GEM
-  remote: http://rubygems.org/
+  remote: https://rubygems.org/
   specs:
     activemodel (3.2.13)
       activesupport (= 3.2.13)
@@ -7,6 +7,7 @@ GEM
     activesupport (3.2.13)
       i18n (= 0.6.1)
       multi_json (~> 1.0)
+    addressable (2.3.3)
     builder (3.0.4)
     columnize (0.3.6)
     debugger (1.5.0)
@@ -50,6 +51,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  addressable
   debugger
   httparty
   mongoid

@@ -26,6 +26,23 @@
             placeholder="e.g. #some-div"
             value="<%= h params[:selector] %>"
           />
+          <label class="radio">
+            <input
+              type="radio"
+              name="selector_type"
+              value="append"
+              checked
+            />
+            Append
+          </label>
+          <label class="radio">
+            <input
+              type="radio"
+              name="selector_type"
+              value="replace"
+            />
+            Replace
+          </label>
           <label>Urtak</label>
           <input
             name="urtak"

@@ -23,11 +23,12 @@ end
 
 class PageParser
 
-  def initialize(url, urtak_code, selector, selector_type)
+  def initialize(url, urtak_code, selector, selector_type, ad_rotation)
     @url           = Addressable::URI.parse url
     @urtak_code    = urtak_code
     @selector      = selector
     @selector_type = selector_type
+    @ad_rotation   = ['1', 'true', 'on'].include? ad_rotation.to_s
 
     # Let's party!
     response = HTTParty.get @url
@@ -39,6 +40,9 @@ class PageParser
   def fetch_clean_and_takeover!
     insert_urtak_script!
     make_links_absolute!
+    if @ad_rotation
+      insert_fugger_script!
+    end
     add_urtak!
   end
 
@@ -67,13 +71,61 @@ class PageParser
 
   # Insert Urtak script into head.
   def insert_urtak_script!
-    head = (@doc.css 'head').first
     head.add_child(%Q{
       <script
         src="https://d39v39m55yawr.cloudfront.net/assets/clr.js"
         type="text/javascript"
       ></script>
     }.strip.gsub(/\s+/m, ' '))
+  end
+
+  def ad_tags
+    start = %Q{
+      <div style="display:none;">
+        <img src="/img/ad-rotation/1.png"/>
+        <img src="/img/ad-rotation/2.png"/>
+        <img src="/img/ad-rotation/3.png"/>
+        <img src="/img/ad-rotation/4.png"/>
+        <img src="/img/ad-rotation/5.png"/>
+        <img src="/img/ad-rotation/6.png"/>
+        <img src="/img/ad-rotation/7.png"/>
+        <img src="/img/ad-rotation/8.png"/>
+      </div>
+      <script type="text/javascript">
+        (function () {
+          if (!window.__urtak_counter__) {
+            window.__urtak_counter__ = 0;
+          }
+          r = window.Urtak2.$("[id^=urtak-rotation]");
+          r.css("z-index", 100000);
+          r.find("img").hide();
+          r.find("img:eq(" + window.__urtak_counter__ + ")").show();
+          r.find("div").show();
+          window.__urtak_counter__ += 1;
+          if (window.__urtak_counter__ === r.find("img").size()) {
+            window.__urtak_counter__ = 0;
+          }
+        }());
+    }.gsub('"', '\"').gsub("\n", '')
+    %Q{
+      "#{start}" + "</" + "script>"
+    }.strip
+  end
+
+  def insert_fugger_script!
+    head.add_child(%Q{
+      <script
+        src="https://d39v39m55yawr.cloudfront.net/assets/fugger.js"
+        type="text/javascript"
+      ></script>
+      <script type="text/javascript">
+        window.Urtak2.createRotation(#{ad_tags});
+      </script>
+    }.strip.gsub(/\s+/m, ' '))
+  end
+
+  def head
+    @head ||= (@doc.css 'head').first
   end
 
   def make_links_absolute!
@@ -142,7 +194,8 @@ class App < Sinatra::Base
     page_parser = PageParser.new params[:url],
       params[:urtak],
       params[:selector],
-      params[:selector_type]
+      params[:selector_type],
+      params[:ad_rotation]
 
     page_parser.fetch_clean_and_takeover!
 

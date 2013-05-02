@@ -186,8 +186,11 @@ class App < Sinatra::Base
   end
 
   get '/:token' do
-    takeover = Takeover.find_by_token params[:token]
-    takeover ? takeover.html : (redirect '/')
+    begin
+      (Takeover.find_by_token params[:token]).html
+    rescue Mongoid::Errors::DocumentNotFound
+      pass
+    end
   end
 
   post '/' do

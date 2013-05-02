@@ -40,6 +40,8 @@ class PageParser
   def fetch_clean_and_takeover!
     insert_urtak_script!
     make_links_absolute!
+    hack_aol_ad_server!
+    hack_pagespeed_lazy_src!
     if @ad_rotation
       insert_fugger_script!
     end
@@ -161,6 +163,20 @@ class PageParser
         url = "#{url}/" if url[-1] != '/'
         url
       end
+  end
+
+  def hack_aol_ad_server!
+    s = (@doc.search 'script').detect { |node| node.content =~ /adSetAdURL/ }
+    s.content = s.content.gsub(
+      /adSetAdURL\("(.*?)"\)/,
+      "adSetAdURL(\"#{@url_host}\\1\")"
+    )
+  end
+
+  def hack_pagespeed_lazy_src!
+    (@doc.css 'img[pagespeed_lazy_src]').each do |img|
+      img['src'] = img['pagespeed_lazy_src']
+    end
   end
 end
 

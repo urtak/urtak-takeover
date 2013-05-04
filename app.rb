@@ -23,12 +23,13 @@ end
 
 class PageParser
 
-  def initialize(url, urtak_code, selector, selector_type, ad_rotation)
+  def initialize(url, urtak_code, selector, selector_type, ad_rotation, cads)
     @url           = Addressable::URI.parse url
     @urtak_code    = urtak_code
     @selector      = selector
     @selector_type = selector_type
     @ad_rotation   = ['1', 'true', 'on'].include? ad_rotation.to_s
+    @custom_ads    = cads
 
     # Let's party!
     response = HTTParty.get @url
@@ -82,16 +83,23 @@ class PageParser
   end
 
   def ad_tags
+    ads = if @custom_ads =~ /[^[:space:]]/
+            @custom_ads
+          else
+            %Q{
+              <img src="/img/ad-rotation/1.png"/>
+              <img src="/img/ad-rotation/2.png"/>
+              <img src="/img/ad-rotation/3.png"/>
+              <img src="/img/ad-rotation/4.png"/>
+              <img src="/img/ad-rotation/5.png"/>
+              <img src="/img/ad-rotation/6.png"/>
+              <img src="/img/ad-rotation/7.png"/>
+              <img src="/img/ad-rotation/8.png"/>
+            }
+          end
     start = %Q{
       <div style="display:none;">
-        <img src="/img/ad-rotation/1.png"/>
-        <img src="/img/ad-rotation/2.png"/>
-        <img src="/img/ad-rotation/3.png"/>
-        <img src="/img/ad-rotation/4.png"/>
-        <img src="/img/ad-rotation/5.png"/>
-        <img src="/img/ad-rotation/6.png"/>
-        <img src="/img/ad-rotation/7.png"/>
-        <img src="/img/ad-rotation/8.png"/>
+        #{ads}
       </div>
       <script type="text/javascript">
         (function () {
@@ -167,10 +175,12 @@ class PageParser
 
   def hack_aol_ad_server!
     s = (@doc.search 'script').detect { |node| node.content =~ /adSetAdURL/ }
-    s.content = s.content.gsub(
-      /adSetAdURL\("(.*?)"\)/,
-      "adSetAdURL(\"#{@url_host}\\1\")"
-    )
+    if s
+      s.content = s.content.gsub(
+        /adSetAdURL\("(.*?)"\)/,
+        "adSetAdURL(\"#{@url_host}\\1\")"
+      )
+    end
   end
 
   def hack_pagespeed_lazy_src!
@@ -214,7 +224,8 @@ class App < Sinatra::Base
       params[:urtak],
       params[:selector],
       params[:selector_type],
-      params[:ad_rotation]
+      params[:ad_rotation],
+      params[:custom_ads]
 
     page_parser.fetch_clean_and_takeover!
 

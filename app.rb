@@ -34,8 +34,8 @@ class PageParser
     # Let's party!
     response = HTTParty.get @url
 
-    # Nokogirize!
-    @doc = Nokogiri::HTML response.body
+    # Nokogirize! (And handle edge case.)
+    @doc = Nokogiri::HTML scrub_docwrite_scripts response.body
   end
 
   def fetch_clean_and_takeover!
@@ -57,6 +57,10 @@ class PageParser
 
   private
 
+  def scrub_docwrite_scripts(body)
+    body.gsub %Q{+ "'></script"}, %Q{+ "'></" + "script"}
+  end
+
   def add_urtak!
     if @selector =~ /[^[:space:]]/
       ele = (@doc.css @selector).first
@@ -72,66 +76,70 @@ class PageParser
     end
   end
 
+  CLR    = "https://d39v39m55yawr.cloudfront.net/assets/clr.js"
+  FUGGER = "https://d39v39m55yawr.cloudfront.net/assets/fugger.js"
+  # CLR    = "http://urtak.dev/assets/clr.js"
+  # FUGGER = "http://urtak.dev/assets/fugger.js"
+
+  DEFAULT_ADS = %Q{
+    <img src="/img/ad-rotation/1.png"/>
+    <img src="/img/ad-rotation/2.png"/>
+    <img src="/img/ad-rotation/3.png"/>
+    <img src="/img/ad-rotation/4.png"/>
+    <img src="/img/ad-rotation/5.png"/>
+    <img src="/img/ad-rotation/6.png"/>
+    <img src="/img/ad-rotation/7.png"/>
+    <img src="/img/ad-rotation/8.png"/>
+  }
+
   # Insert Urtak script into head.
   def insert_urtak_script!
     head.add_child(%Q{
-      <script
-        src="https://d39v39m55yawr.cloudfront.net/assets/clr.js"
-        type="text/javascript"
-      ></script>
-    }.strip.gsub(/\s+/m, ' '))
+      <script src="#{CLR}" type="text/javascript"></script>
+    })
   end
 
   def ad_tags
-    ads = if @custom_ads =~ /[^[:space:]]/
-            @custom_ads
-          else
-            %Q{
-              <img src="/img/ad-rotation/1.png"/>
-              <img src="/img/ad-rotation/2.png"/>
-              <img src="/img/ad-rotation/3.png"/>
-              <img src="/img/ad-rotation/4.png"/>
-              <img src="/img/ad-rotation/5.png"/>
-              <img src="/img/ad-rotation/6.png"/>
-              <img src="/img/ad-rotation/7.png"/>
-              <img src="/img/ad-rotation/8.png"/>
-            }
-          end
-    start = %Q{
+    ads = @custom_ads =~ /[^[:space:]]/ ? @custom_ads : DEFAULT_ADS
+    %Q{
       <div style="display:none;">
         #{ads}
       </div>
-      <script type="text/javascript">
-        (function () {
-          if (!window.__urtak_counter__) {
-            window.__urtak_counter__ = 0;
-          }
-          r = window.Urtak2.$("[id^=urtak-rotation]");
-          r.css("z-index", 100000);
-          r.find("img").hide();
-          r.find("img:eq(" + window.__urtak_counter__ + ")").show();
-          r.find("div").show();
-          window.__urtak_counter__ += 1;
-          if (window.__urtak_counter__ === r.find("img").size()) {
-            window.__urtak_counter__ = 0;
-          }
-        }());
-    }.gsub('"', '\"').gsub("\n", '')
-    %Q{
-      "#{start}" + "</" + "script>"
-    }.strip
+    }.gsub('"', '\"').gsub("\n", '').gsub(/\s+/, ' ').strip
   end
 
   def insert_fugger_script!
     head.add_child(%Q{
-      <script
-        src="https://d39v39m55yawr.cloudfront.net/assets/fugger.js"
-        type="text/javascript"
-      ></script>
+      <script src="#{FUGGER}" type="text/javascript"></script>
+    })
+    head.add_child(%Q{
       <script type="text/javascript">
-        window.Urtak2.createRotation(#{ad_tags});
+        window.Urtak2.createRotation("#{ad_tags}");
       </script>
-    }.strip.gsub(/\s+/m, ' '))
+    })
+    head.add_child(%Q{
+      <script type="text/javascript">
+        if (!window.__urtak_hooks__) {
+          window.__urtak_hooks__ = []
+        }
+        window.__urtak_hooks__.push(function (opts) {
+          if (opts.action === "response") {
+            if (!window.__urtak_counter__) {
+              window.__urtak_counter__ = 0;
+            }
+            r = window.Urtak2.$("[id^=urtak-rotation]");
+            r.css("z-index", 100000);
+            r.find("img").hide();
+            r.find("img:eq(" + window.__urtak_counter__ + ")").show();
+            r.find("div").show();
+            window.__urtak_counter__ += 1;
+            if (window.__urtak_counter__ === r.find("img").size()) {
+              window.__urtak_counter__ = 0;
+            }
+          }
+        });
+      </script>
+    })
   end
 
   def head
